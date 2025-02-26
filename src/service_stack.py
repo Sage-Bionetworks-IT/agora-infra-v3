@@ -127,12 +127,6 @@ class ServiceStack(cdk.Stack):
             health_check=props.container_healthcheck,
         )
 
-        self.security_group = ec2.SecurityGroup(self, "SecurityGroup", vpc=vpc)
-        self.security_group.add_ingress_rule(
-            peer=ec2.Peer.ipv4("0.0.0.0/0"),
-            connection=ec2.Port.tcp(props.container_port),
-        )
-
         # attach ECS task to ECS cluster
         self.service = ecs.FargateService(
             self,
@@ -141,7 +135,6 @@ class ServiceStack(cdk.Stack):
             task_definition=self.task_definition,
             enable_execute_command=True,
             circuit_breaker=ecs.DeploymentCircuitBreaker(enable=True, rollback=True),
-            security_groups=([self.security_group]),
             service_connect_configuration=ecs.ServiceConnectProps(
                 log_driver=ecs.LogDrivers.aws_logs(stream_prefix=f"{construct_id}"),
                 services=[
@@ -164,6 +157,7 @@ class ServiceStack(cdk.Stack):
                 ),
             ],
         )
+        self.service.connections.allow_from_any_ipv4(ec2.Port.tcp(props.container_port))
 
         # Setup AutoScaling policy
         scaling = self.service.auto_scale_task_count(
@@ -223,7 +217,7 @@ class LoadBalancedServiceStack(ServiceStack):
         cluster: ecs.Cluster,
         props: ServiceProps,
         load_balancer: elbv2.ApplicationLoadBalancer,
-        certificate_arn: str,
+        certificate_id: str,
         health_check_path: str = "/",
         health_check_interval: int = 1,  # max is 5
         **kwargs,
@@ -233,6 +227,9 @@ class LoadBalancedServiceStack(ServiceStack):
         # -------------------
         # ACM Certificate for HTTPS
         # -------------------
+        certificate_arn = (
+            f"arn:aws:acm:{self.region}:{self.account}:certificate/{certificate_id}"
+        )
         self.cert = acm.Certificate.from_certificate_arn(
             self, "Cert", certificate_arn=certificate_arn
         )

@@ -1,11 +1,11 @@
-name: check
+name: test
 
 on:
-  pull_request:
-    branches: ['*']
-  push:
-    branches: ['*']
-
+  workflow_call:
+    inputs:
+      environment:
+        required: true
+        type: string
 jobs:
   unit-tests:
     runs-on: ubuntu-latest
@@ -21,14 +21,12 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v3
+      - name: Install AWS CDK CLI
+        run: npm install -g aws-cdk
       - name: Install dependencies
         run: pip install -r requirements.txt -r requirements-dev.txt
       - name: Generate cloudformation
-        uses: youyo/aws-cdk-github-actions@v2
         env:
-          ENV: dev
-        with:
-          cdk_subcommand: 'synth'
-          actions_comment: false
-          debug_log: true
-          cdk_args: '--output ./cdk.out'
+          ENV: ${{ inputs.environment }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: cdk synth --output ./cdk.out

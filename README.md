@@ -80,10 +80,12 @@ Please install pre-commit, once installed the file validations will
 automatically run on every commit.  Alternatively you can manually
 execute the validations by running `pre-commit run --all-files`.
 
+Create a [GitHub classic PAT](https://docs.github.com/en/authentication/keeping-your-account-and-data-secure/managing-your-personal-access-tokens#creating-a-personal-access-token-classic) with `read:packages` access, then create a .env file using .env.example as a template.
+
 Verify CDK to Cloudformation conversion by running [cdk synth]:
 
 ```console
-ENV=dev cdk synth
+env $(cat .env | xargs) cdk synth
 ```
 
 The Cloudformation output is saved to the `cdk.out` folder
@@ -240,7 +242,7 @@ Deployment requires setting up an [AWS profile](https://docs.aws.amazon.com/cli/
 then executing the following command:
 
 ```console
-AWS_PROFILE=itsandbox-dev AWS_DEFAULT_REGION=us-east-1 ENV=dev cdk deploy --all
+env $(cat .env | xargs) AWS_PROFILE=itsandbox-dev AWS_DEFAULT_REGION=us-east-1 cdk deploy --all
 ```
 
 ## Force new deployment

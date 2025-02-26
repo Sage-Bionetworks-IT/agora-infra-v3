@@ -4,7 +4,7 @@
 set -euxo pipefail
 
 # Install Node.js dependencies
-npm install -g aws-cdk@2.151.0
+npm install -g aws-cdk@2.176.0
 
 # Install Python dependencies
 python -m venv .venv

@@ -1,15 +1,14 @@
 name: deploy-dev
 
 on:
-  workflow_run:
-    workflows:
-      - check
-    types:
-      - completed
-    branches:
-      - dev
+  push:
+    branches: ['dev']
 
 jobs:
+  test:
+    uses: ./.github/workflows/test.yaml
+    with:
+      environment: dev
   aws-deploy:
     uses: "./.github/workflows/aws-deploy.yaml"
     with:
