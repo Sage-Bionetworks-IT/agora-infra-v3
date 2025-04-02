@@ -24,6 +24,7 @@ match environment:
             "FQDN": "newagora-prod.adknowledgeportal.org",
             "CERTIFICATE_ID": "69b3ba97-b382-4648-8f94-a250b77b4994",
             "TAGS": {"CostCenter": "Agora / 112300"},
+            "AUTO_SCALE_CAPACITY": {"min": 2, "max": 4},
         }
     case "stage":
         environment_variables = {
@@ -31,6 +32,7 @@ match environment:
             "FQDN": "newagora-stage.adknowledgeportal.org",
             "CERTIFICATE_ID": "69b3ba97-b382-4648-8f94-a250b77b4994",
             "TAGS": {"CostCenter": "Agora / 112300"},
+            "AUTO_SCALE_CAPACITY": {"min": 2, "max": 4},
         }
     case "dev":
         environment_variables = {
@@ -38,6 +40,7 @@ match environment:
             "FQDN": "newagora-dev.adknowledgeportal.org",
             "CERTIFICATE_ID": "e8093404-7db1-4042-90d0-01eb5bde1ffc",
             "TAGS": {"CostCenter": "Agora / 112300"},
+            "AUTO_SCALE_CAPACITY": {"min": 1, "max": 2},
         }
     case _:
         valid_envs_str = ",".join(VALID_ENVIRONMENTS)
@@ -137,6 +140,8 @@ api_props = ServiceProps(
             environment_key="MONGODB_PASS",
         )
     ],
+    auto_scale_min_capacity=environment_variables["AUTO_SCALE_CAPACITY"]["min"],
+    auto_scale_max_capacity=environment_variables["AUTO_SCALE_CAPACITY"]["max"],
 )
 api_stack = ServiceStack(
     scope=cdk_app,
@@ -162,6 +167,8 @@ app_props = ServiceProps(
         "SSR_API_URL": "http://agora-api:3333/api/v1",
         "TAG_NAME": f"agora/v${app_version}",
     },
+    auto_scale_min_capacity=environment_variables["AUTO_SCALE_CAPACITY"]["min"],
+    auto_scale_max_capacity=environment_variables["AUTO_SCALE_CAPACITY"]["max"],
 )
 app_stack = ServiceStack(
     scope=cdk_app,
@@ -183,6 +190,8 @@ apex_props = ServiceProps(
         "APP_HOST": "agora-app",
         "APP_PORT": "4200",
     },
+    auto_scale_min_capacity=environment_variables["AUTO_SCALE_CAPACITY"]["min"],
+    auto_scale_max_capacity=environment_variables["AUTO_SCALE_CAPACITY"]["max"],
 )
 apex_stack = LoadBalancedServiceStack(
     scope=cdk_app,
