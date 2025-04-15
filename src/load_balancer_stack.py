@@ -82,7 +82,7 @@ class LoadBalancerStack(cdk.Stack):
                             field_to_match=wafv2.CfnWebACL.FieldToMatchProperty(
                                 uri_path={}
                             ),
-                            text_transformation=[
+                            text_transformations=[
                                 wafv2.CfnWebACL.TextTransformationProperty(
                                     priority=1, type="NONE"
                                 )
