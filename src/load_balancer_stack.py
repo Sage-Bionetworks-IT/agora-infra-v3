@@ -79,31 +79,6 @@ class LoadBalancerStack(cdk.Stack):
                         metric_name="AWSManagedRulesKnownBadInputsRuleSet",
                     ),
                 ),
-                # Custom rule to limit URL length to 4000 characters
-                wafv2.CfnWebACL.RuleProperty(
-                    name="LimitURLLength",
-                    priority=2,
-                    statement=wafv2.CfnWebACL.StatementProperty(
-                        size_constraint_statement=wafv2.CfnWebACL.SizeConstraintStatementProperty(
-                            comparison_operator="GT",
-                            size=4000,
-                            field_to_match=wafv2.CfnWebACL.FieldToMatchProperty(
-                                uri_path={}
-                            ),
-                            text_transformations=[
-                                wafv2.CfnWebACL.TextTransformationProperty(
-                                    priority=1, type="NONE"
-                                )
-                            ],
-                        )
-                    ),
-                    action=wafv2.CfnWebACL.RuleActionProperty(block={}),
-                    visibility_config=wafv2.CfnWebACL.VisibilityConfigProperty(
-                        cloud_watch_metrics_enabled=True,
-                        metric_name="LimitURLLength",
-                        sampled_requests_enabled=True,
-                    ),
-                ),
             ],
         )
 
