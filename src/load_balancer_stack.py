@@ -48,7 +48,7 @@ class LoadBalancerStack(cdk.Stack):
                                 wafv2.CfnWebACL.RuleActionOverrideProperty(
                                     name="SizeRestrictions_QUERYSTRING",
                                     action_to_use=wafv2.CfnWebACL.RuleActionProperty(
-                                        block={}  # This effectively disables the rule
+                                        allow={}
                                     ),
                                 )
                             ],
