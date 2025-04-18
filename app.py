@@ -166,6 +166,7 @@ app_props = ServiceProps(
         "CSR_API_URL": f"https://{fully_qualified_domain_name}/api/v1",
         "SSR_API_URL": "http://agora-api:3333/api/v1",
         "TAG_NAME": f"agora/v${app_version}",
+        "GOOGLE_TAG_MANAGER_ID": "GTM-WHXXVWKC",
     },
     auto_scale_min_capacity=environment_variables["AUTO_SCALE_CAPACITY"]["min"],
     auto_scale_max_capacity=environment_variables["AUTO_SCALE_CAPACITY"]["max"],
