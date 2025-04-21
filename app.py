@@ -126,7 +126,7 @@ api_props = ServiceProps(
     container_name="agora-api",
     container_location=f"ghcr.io/sage-bionetworks/agora-api:{api_version}",
     container_port=3333,
-    container_memory=1024,
+    container_memory_reservation=2048,
     container_env_vars={
         "NODE_ENV": "development",
         "MONGODB_PORT": f"{mongodb_port}",
@@ -160,12 +160,13 @@ app_props = ServiceProps(
     container_name="agora-app",
     container_location=f"ghcr.io/sage-bionetworks/agora-app:{app_version}",
     container_port=4200,
-    container_memory=200,
+    container_memory_reservation=1024,
     container_env_vars={
         "APP_VERSION": f"{app_version}",
         "CSR_API_URL": f"https://{fully_qualified_domain_name}/api/v1",
         "SSR_API_URL": "http://agora-api:3333/api/v1",
         "TAG_NAME": f"agora/v${app_version}",
+        "GOOGLE_TAG_MANAGER_ID": "GTM-WHXXVWKC",
     },
     auto_scale_min_capacity=environment_variables["AUTO_SCALE_CAPACITY"]["min"],
     auto_scale_max_capacity=environment_variables["AUTO_SCALE_CAPACITY"]["max"],
@@ -183,7 +184,7 @@ apex_props = ServiceProps(
     container_name="agora-apex",
     container_location=f"ghcr.io/sage-bionetworks/agora-apex:{apex_version}",
     container_port=80,
-    container_memory=200,
+    container_memory_reservation=200,
     container_env_vars={
         "API_HOST": "agora-api",
         "API_PORT": "3333",
