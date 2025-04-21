@@ -44,6 +44,14 @@ class LoadBalancerStack(cdk.Stack):
                         managed_rule_group_statement=wafv2.CfnWebACL.ManagedRuleGroupStatementProperty(
                             name="AWSManagedRulesCommonRuleSet",
                             vendor_name="AWS",
+                            rule_action_overrides=[
+                                wafv2.CfnWebACL.RuleActionOverrideProperty(
+                                    name="SizeRestrictions_QUERYSTRING",
+                                    action_to_use=wafv2.CfnWebACL.RuleActionProperty(
+                                        allow={}
+                                    ),
+                                )
+                            ],
                         )
                     ),
                     override_action=wafv2.CfnWebACL.OverrideActionProperty(none={}),

@@ -53,7 +53,7 @@ class ServiceProps:
       supports "path://" for building container from local (i.e. path://docker/MyContainer)
       supports docker registry references (i.e. ghcr.io/sage-bionetworks/app:latest)
     container_port: the container application port
-    container_memory: the container application memory
+    container_memory_reservation: the soft limit of memory to reserve from the task memory for the container application
     container_env_vars: a json dictionary of environment variables to pass into the container
       i.e. {"EnvA": "EnvValueA", "EnvB": "EnvValueB"}
     container_secrets: List of `ServiceSecret` resources to pull from AWS secrets manager
@@ -69,7 +69,7 @@ class ServiceProps:
         container_name: str,
         container_location: str,
         container_port: int,
-        container_memory: int = 512,
+        container_memory_reservation: int = 512,
         container_env_vars: dict = None,
         container_secrets: List[ServiceSecret] = None,
         container_volumes: List[ContainerVolume] = None,
@@ -80,7 +80,7 @@ class ServiceProps:
     ) -> None:
         self.container_name = container_name
         self.container_port = container_port
-        self.container_memory = container_memory
+        self.container_memory_reservation = container_memory_reservation
         if CONTAINER_LOCATION_PATH_ID in container_location:
             container_location = container_location.removeprefix(
                 CONTAINER_LOCATION_PATH_ID

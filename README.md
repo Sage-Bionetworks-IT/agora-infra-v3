@@ -144,7 +144,7 @@ from src.service_props import ServiceProps, ServiceSecret
 app_service_props = ServiceProps(
     container_name="app",
     container_port=443,
-    container_memory=1024,
+    container_memory_reservation=1024,
     container_location="ghcr.io/sage-bionetworks/app:v1.0",
     container_secrets=[
         ServiceSecret(
