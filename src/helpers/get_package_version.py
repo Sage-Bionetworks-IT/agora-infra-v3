@@ -58,6 +58,8 @@ def get_edge_package_version(versions: PackageVersionList) -> PackageVersion:
 
 
 def get_nonedge_tag(tags: List[str]) -> str:
+    if len(tags) == 1:
+        return tags[0]
     return [tag for tag in tags if tag != "edge"][0]
 
 
