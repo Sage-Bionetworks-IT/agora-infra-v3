@@ -21,7 +21,7 @@ match environment:
     case "prod":
         environment_variables = {
             "VPC_CIDR": "10.254.174.0/24",
-            "FQDN": "agora-prod.adknowledgeportal.org",
+            "FQDN": "agora.adknowledgeportal.org",
             "CERTIFICATE_ID": "69b3ba97-b382-4648-8f94-a250b77b4994",
             "TAGS": {"CostCenter": "Agora / 112300"},
             "AUTO_SCALE_CAPACITY": {"min": 2, "max": 4},
