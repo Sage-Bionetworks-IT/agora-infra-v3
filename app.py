@@ -21,7 +21,7 @@ match environment:
     case "prod":
         environment_variables = {
             "VPC_CIDR": "10.254.174.0/24",
-            "FQDN": "newagora-prod.adknowledgeportal.org",
+            "FQDN": "agora-prod.adknowledgeportal.org",
             "CERTIFICATE_ID": "69b3ba97-b382-4648-8f94-a250b77b4994",
             "TAGS": {"CostCenter": "Agora / 112300"},
             "AUTO_SCALE_CAPACITY": {"min": 2, "max": 4},
@@ -29,7 +29,7 @@ match environment:
     case "stage":
         environment_variables = {
             "VPC_CIDR": "10.254.173.0/24",
-            "FQDN": "newagora-stage.adknowledgeportal.org",
+            "FQDN": "agora-stage.adknowledgeportal.org",
             "CERTIFICATE_ID": "69b3ba97-b382-4648-8f94-a250b77b4994",
             "TAGS": {"CostCenter": "Agora / 112300"},
             "AUTO_SCALE_CAPACITY": {"min": 2, "max": 4},
@@ -37,7 +37,7 @@ match environment:
     case "dev":
         environment_variables = {
             "VPC_CIDR": "10.254.172.0/24",
-            "FQDN": "newagora-dev.adknowledgeportal.org",
+            "FQDN": "agora-dev.adknowledgeportal.org",
             "CERTIFICATE_ID": "e8093404-7db1-4042-90d0-01eb5bde1ffc",
             "TAGS": {"CostCenter": "Agora / 112300"},
             "AUTO_SCALE_CAPACITY": {"min": 1, "max": 2},
