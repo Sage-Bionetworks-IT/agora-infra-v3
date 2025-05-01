@@ -23,7 +23,7 @@ match environment:
             "VPC_CIDR": "10.254.174.0/24",
             "FQDN": "agora.adknowledgeportal.org",
             "CERTIFICATE_ID": "69b3ba97-b382-4648-8f94-a250b77b4994",
-            "TAGS": {"CostCenter": "Agora / 112300"},
+            "TAGS": {"CostCenter": "AMP-AD DCC / 101500"},
             "AUTO_SCALE_CAPACITY": {"min": 2, "max": 4},
         }
     case "stage":
@@ -31,7 +31,7 @@ match environment:
             "VPC_CIDR": "10.254.173.0/24",
             "FQDN": "agora-stage.adknowledgeportal.org",
             "CERTIFICATE_ID": "69b3ba97-b382-4648-8f94-a250b77b4994",
-            "TAGS": {"CostCenter": "Agora / 112300"},
+            "TAGS": {"CostCenter": "AMP-AD DCC / 101500"},
             "AUTO_SCALE_CAPACITY": {"min": 2, "max": 4},
         }
     case "dev":
@@ -39,7 +39,7 @@ match environment:
             "VPC_CIDR": "10.254.172.0/24",
             "FQDN": "agora-dev.adknowledgeportal.org",
             "CERTIFICATE_ID": "e8093404-7db1-4042-90d0-01eb5bde1ffc",
-            "TAGS": {"CostCenter": "Agora / 112300"},
+            "TAGS": {"CostCenter": "AMP-AD DCC / 101500"},
             "AUTO_SCALE_CAPACITY": {"min": 1, "max": 2},
         }
     case _:
