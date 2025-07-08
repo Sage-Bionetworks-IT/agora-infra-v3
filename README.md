@@ -49,7 +49,7 @@ tools can be installed by running:
 
 Development requires the activation of the Python virtual environment:
 
-```
+```console
 $ source .venv/bin/activate
 ```
 
