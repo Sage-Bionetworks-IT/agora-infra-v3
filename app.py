@@ -25,7 +25,7 @@ match environment:
             "CERTIFICATE_ID": "69b3ba97-b382-4648-8f94-a250b77b4994",
             "TAGS": {"CostCenter": "AMP-AD DCC / 101500", "Environment": "prod"},
             "AUTO_SCALE_CAPACITY": {"min": 2, "max": 4},
-            "GHCR_PACKAGE_VERSION": "4.0.0-rc4",
+            "GHCR_PACKAGE_VERSION": "4.1.0-rc1",
         }
     case "stage":
         environment_variables = {
@@ -34,7 +34,7 @@ match environment:
             "CERTIFICATE_ID": "69b3ba97-b382-4648-8f94-a250b77b4994",
             "TAGS": {"CostCenter": "AMP-AD DCC / 101500", "Environment": "stage"},
             "AUTO_SCALE_CAPACITY": {"min": 2, "max": 4},
-            "GHCR_PACKAGE_VERSION": "4.0.0-rc4",
+            "GHCR_PACKAGE_VERSION": "4.1.0-rc1",
         }
     case "dev":
         environment_variables = {
