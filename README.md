@@ -383,16 +383,16 @@ Stage and prod environments point at a specific git tag that is manually added. 
 
 1. Review the list of existing tags [here](https://github.com/Sage-Bionetworks/sage-monorepo/tags). Identify the next `agora` tag. For example, if the last `agora` tag is `agora/v4.0.0-rc2`, then the next tag will be `agora/v4.0.0-rc3`. If the last `agora` tag doesn’t have a release candidate suffix (e.g. `agora/v4.0.0`), then the next tag will be the first release candidate of a new version (e.g. `agora/v4.0.1-rc1`). This follows the convention found at [semver.org](https://semver.org/).
 2. Create a new git tag in the sage-monorepo:
-   - Open devcontainer
+   - Open devcontainer in your IDE
    - Checkout the main branch: `git checkout main`
    - Fetch latest changes: `git fetch upstream`
    - Rebase: `git rebase upstream/main`
    - Tag the commit: `git tag agora/v4.0.0-rc3`
    - Push the tag: `git push upstream tag agora/v4.0.0-rc3`
 3. Wait for sage-monorepo [release GHA job](https://github.com/Sage-Bionetworks/sage-monorepo/actions/workflows/release.yml) to successfully build, tag, and push images to GHCR.
-4. Create PR in this repo **to the dev branch** that sets `GHCR_PACKAGE_VERSION` for stage and prod environments to the new version number in `app.py`, since the images are only tagged with the version number (e.g. `4.0.0-rc3`) rather than the full tag name (e.g. `agora/v4.0.0-rc3` ).
+4. Create a new branch in your IDE.  Update the new version number in app.py and create a PR in this repo **to the dev branch** that sets `GHCR_PACKAGE_VERSION` for stage and prod environments to the new version number you created previously, since the images are only tagged with the version number (e.g. `4.0.0-rc3`) rather than the full tag name (e.g. `agora/v4.0.0-rc3` ).
 5. Merge PR. Wait for [deploy-dev job](https://github.com/Sage-Bionetworks-IT/agora-infra-v3/actions/workflows/deploy-dev.yaml) to successfully update dev deployment. Deployment can be monitored in AWS console in AWS ECS.
-6. Create PR in this repo **to merge dev into the stage branch**.
+6. Create PR in this repo **to merge dev into the stage branch**.  You can use this [url](https://github.com/Sage-Bionetworks-IT/agora-infra-v3/compare/stage...dev)
 7. Merge PR. Wait for [deploy-stage GHA job](https://github.com/Sage-Bionetworks-IT/modeladexplorer-v3/actions/workflows/deploy-stage.yaml) to successfully update staging deployment. Deployment can be monitored in AWS console in AWS ECS.
 8. Confirm that [staging site](https://agora-stage.adknowledgeportal.org/) shows new version’s tag in the app footer.
 
