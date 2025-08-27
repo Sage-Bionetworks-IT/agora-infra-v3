@@ -25,6 +25,7 @@ match environment:
             "CERTIFICATE_ID": "69b3ba97-b382-4648-8f94-a250b77b4994",
             "TAGS": {"CostCenter": "AMP-AD DCC / 101500", "Environment": "prod"},
             "AUTO_SCALE_CAPACITY": {"min": 2, "max": 4},
+            "GHCR_PACKAGE_VERSION": "4.1.0-rc2",
         }
     case "stage":
         environment_variables = {
@@ -33,6 +34,7 @@ match environment:
             "CERTIFICATE_ID": "69b3ba97-b382-4648-8f94-a250b77b4994",
             "TAGS": {"CostCenter": "AMP-AD DCC / 101500", "Environment": "stage"},
             "AUTO_SCALE_CAPACITY": {"min": 2, "max": 4},
+            "GHCR_PACKAGE_VERSION": "4.1.0-rc2",
         }
     case "dev":
         environment_variables = {
@@ -41,6 +43,7 @@ match environment:
             "CERTIFICATE_ID": "e8093404-7db1-4042-90d0-01eb5bde1ffc",
             "TAGS": {"CostCenter": "AMP-AD DCC / 101500", "Environment": "dev"},
             "AUTO_SCALE_CAPACITY": {"min": 1, "max": 2},
+            "GHCR_PACKAGE_VERSION": "edge",
         }
     case _:
         valid_envs_str = ",".join(VALID_ENVIRONMENTS)
@@ -51,13 +54,13 @@ match environment:
 stack_name_prefix = f"agora-{environment}"
 fully_qualified_domain_name = environment_variables["FQDN"]
 environment_tags = environment_variables["TAGS"]
-agora_version = "4.0.0-rc4"
+ghcr_package_version = environment_variables["GHCR_PACKAGE_VERSION"]
 docdb_master_username = "master"
 mongodb_port = 27017
 vpn_cidr = "10.1.0.0/16"
 
 # Get image versions
-if agora_version == "edge":
+if ghcr_package_version == "edge":
     app_version = get_alternate_tag_for_edge_package_version(
         "Sage-Bionetworks", "agora-app"
     )
@@ -68,7 +71,7 @@ if agora_version == "edge":
         "Sage-Bionetworks", "agora-apex"
     )
 else:
-    app_version = api_version = apex_version = agora_version
+    app_version = api_version = apex_version = ghcr_package_version
 
 print(
     f"Using images: agora-app:{app_version}, agora-api:{api_version}, agora-apex:{apex_version}"
@@ -164,7 +167,7 @@ app_props = ServiceProps(
     container_env_vars={
         "APP_VERSION": f"{app_version}",
         "CSR_API_URL": f"https://{fully_qualified_domain_name}/api/v1",
-        "SSR_API_URL": "http://agora-api:3333/api/v1",
+        "SSR_API_URL": "http://agora-api:3333/v1",
         "TAG_NAME": f"agora/v{app_version}",
         "GOOGLE_TAG_MANAGER_ID": "GTM-WHXXVWKC",
     },
