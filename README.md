@@ -404,8 +404,10 @@ Stage and prod environments point at a specific git tag that is manually added. 
    - Checkout the main branch: `git checkout main`
    - Fetch latest changes: `git fetch upstream`
    - Rebase: `git rebase upstream/main`
-   - Tag the commit: `git tag agora/release/v4.0.0`
+   - Get the commit hash of the existing tag: `git rev-list -n 1 agora/v4.0.0-rc3`
+   - Create a new tag pointing to the same commit: `git tag agora/release/v4.0.0 {commit hash}`
+   - Confirm that the new tag is on the same commit as the previous tag by reviewing the git log: `git log --oneline`
    - Push the tag: `git push upstream tag agora/release/v4.0.0`
-3. Create a PR in this repo **to merge the stage branch into the prod branch**.
+3. Create a PR in this repo **to merge the stage branch into the prod branch**. You can use this [url](https://github.com/Sage-Bionetworks-IT/agora-infra-v3/compare/prod...stage).
 4. Merge PR. Wait for the [deploy-prod GHA job](https://github.com/Sage-Bionetworks-IT/modeladexplorer-v3/actions/workflows/deploy-prod.yaml) to successfully update prod deployment. Deployment can be monitored in AWS console in AWS ECS.
 5. Confirm that [production site](https://agora.adknowledgeportal.org/) shows the same tag in the app footer as the staging site.
