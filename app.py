@@ -25,7 +25,7 @@ match environment:
             "CERTIFICATE_ID": "69b3ba97-b382-4648-8f94-a250b77b4994",
             "TAGS": {"CostCenter": "AMP-AD DCC / 101500", "Environment": "prod"},
             "AUTO_SCALE_CAPACITY": {"min": 2, "max": 4},
-            "GHCR_PACKAGE_VERSION": "4.1.0-rc2",
+            "GHCR_PACKAGE_VERSION": "4.2.0-rc2",
         }
     case "stage":
         environment_variables = {
@@ -34,7 +34,7 @@ match environment:
             "CERTIFICATE_ID": "69b3ba97-b382-4648-8f94-a250b77b4994",
             "TAGS": {"CostCenter": "AMP-AD DCC / 101500", "Environment": "stage"},
             "AUTO_SCALE_CAPACITY": {"min": 2, "max": 4},
-            "GHCR_PACKAGE_VERSION": "4.1.0-rc2",
+            "GHCR_PACKAGE_VERSION": "4.2.0-rc2",
         }
     case "dev":
         environment_variables = {
@@ -67,14 +67,18 @@ if ghcr_package_version == "edge":
     api_version = get_alternate_tag_for_edge_package_version(
         "Sage-Bionetworks", "agora-api"
     )
+    api_next_version = get_alternate_tag_for_edge_package_version(
+        "Sage-Bionetworks", "agora-api-next"
+    )
     apex_version = get_alternate_tag_for_edge_package_version(
         "Sage-Bionetworks", "agora-apex"
     )
 else:
-    app_version = api_version = apex_version = ghcr_package_version
+    app_version = api_version = api_next_version = apex_version = ghcr_package_version
 
 print(
-    f"Using images: agora-app:{app_version}, agora-api:{api_version}, agora-apex:{apex_version}"
+    f"Using images: agora-app:{app_version}, agora-api:{api_version}, "
+    f"agora-api-next:{api_next_version}, agora-apex:{apex_version}"
 )
 
 # Define stacks
@@ -159,6 +163,42 @@ api_stack.service.connections.allow_to_default_port(
     "Allow API container to connect to DocumentDB cluster",
 )
 
+api_next_props = ServiceProps(
+    container_name="agora-api-next",
+    container_location=f"ghcr.io/sage-bionetworks/agora-api-next:{api_next_version}",
+    container_port=3334,
+    container_memory_reservation=2048,
+    container_env_vars={
+        "SERVER_PORT": "3334",
+        "SPRING_DATA_MONGODB_HOST": docdb_stack.cluster.cluster_endpoint.hostname,
+        "SPRING_DATA_MONGODB_PORT": f"{mongodb_port}",
+        "SPRING_DATA_MONGODB_DATABASE": "agora",
+        "SPRING_DATA_MONGODB_USERNAME": docdb_master_username,
+        "SPRING_DATA_MONGODB_AUTHENTICATION_DATABASE": "admin",
+        "SPRING_PROFILES_ACTIVE": f"{environment}",
+    },
+    container_secrets=[
+        ServiceSecret(
+            secret_name=docdb_stack.master_password_secret.secret_name,
+            environment_key="SPRING_DATA_MONGODB_PASSWORD",
+        )
+    ],
+    auto_scale_min_capacity=environment_variables["AUTO_SCALE_CAPACITY"]["min"],
+    auto_scale_max_capacity=environment_variables["AUTO_SCALE_CAPACITY"]["max"],
+)
+api_next_stack = ServiceStack(
+    scope=cdk_app,
+    construct_id=f"{stack_name_prefix}-api-next",
+    vpc=network_stack.vpc,
+    cluster=ecs_stack.cluster,
+    props=api_next_props,
+)
+api_next_stack.add_dependency(docdb_stack)
+api_next_stack.service.connections.allow_to_default_port(
+    docdb_stack.cluster,
+    "Allow API Next container to connect to DocumentDB cluster",
+)
+
 app_props = ServiceProps(
     container_name="agora-app",
     container_location=f"ghcr.io/sage-bionetworks/agora-app:{app_version}",
@@ -167,6 +207,7 @@ app_props = ServiceProps(
     container_env_vars={
         "APP_VERSION": f"{app_version}",
         "CSR_API_URL": f"https://{fully_qualified_domain_name}/api/v1",
+        # TODO: update this port when agora-api is removed from this stack
         "SSR_API_URL": "http://agora-api:3333/v1",
         "TAG_NAME": f"agora/v{app_version}",
         "GOOGLE_TAG_MANAGER_ID": "GTM-WHXXVWKC",
@@ -182,6 +223,7 @@ app_stack = ServiceStack(
     props=app_props,
 )
 app_stack.add_dependency(api_stack)
+app_stack.add_dependency(api_next_stack)
 
 apex_props = ServiceProps(
     container_name="agora-apex",
@@ -193,6 +235,8 @@ apex_props = ServiceProps(
         "API_PORT": "3333",
         "APP_HOST": "agora-app",
         "APP_PORT": "4200",
+        "API_NEXT_HOST": "agora-api-next",
+        "API_NEXT_PORT": "3334",
     },
     auto_scale_min_capacity=environment_variables["AUTO_SCALE_CAPACITY"]["min"],
     auto_scale_max_capacity=environment_variables["AUTO_SCALE_CAPACITY"]["max"],
@@ -209,6 +253,7 @@ apex_stack = LoadBalancedServiceStack(
 )
 apex_stack.add_dependency(app_stack)
 apex_stack.add_dependency(api_stack)
+apex_stack.add_dependency(api_next_stack)
 
 bastion_props = BastionProps(
     key_name="agora-access",

@@ -393,7 +393,7 @@ Stage and prod environments point at a specific git tag that is manually added. 
 4. Create a new branch in your IDE.  Update the new version number in app.py and create a PR in this repo **to the dev branch** that sets `GHCR_PACKAGE_VERSION` for stage and prod environments to the new version number you created previously, since the images are only tagged with the version number (e.g. `4.0.0-rc3`) rather than the full tag name (e.g. `agora/v4.0.0-rc3` ).
 5. Merge PR. Wait for [deploy-dev job](https://github.com/Sage-Bionetworks-IT/agora-infra-v3/actions/workflows/deploy-dev.yaml) to successfully update dev deployment. Deployment can be monitored in AWS console in AWS ECS.
 6. Create PR in this repo **to merge dev into the stage branch**.  You can use this [url](https://github.com/Sage-Bionetworks-IT/agora-infra-v3/compare/stage...dev)
-7. Merge PR. Wait for [deploy-stage GHA job](https://github.com/Sage-Bionetworks-IT/modeladexplorer-v3/actions/workflows/deploy-stage.yaml) to successfully update staging deployment. Deployment can be monitored in AWS console in AWS ECS.
+7. Merge PR. Wait for [deploy-stage GHA job](https://github.com/Sage-Bionetworks-IT/agora-infra-v3/actions/workflows/deploy-stage.yaml) to successfully update staging deployment. Deployment can be monitored in AWS console in AWS ECS.
 8. Confirm that [staging site](https://agora-stage.adknowledgeportal.org/) shows new version’s tag in the app footer.
 
 ## Production Deployment
@@ -404,8 +404,10 @@ Stage and prod environments point at a specific git tag that is manually added. 
    - Checkout the main branch: `git checkout main`
    - Fetch latest changes: `git fetch upstream`
    - Rebase: `git rebase upstream/main`
-   - Tag the commit: `git tag agora/release/v4.0.0`
+   - Get the commit hash of the existing tag: `git rev-list -n 1 agora/v4.0.0-rc3`
+   - Create a new tag pointing to the same commit: `git tag agora/release/v4.0.0 {commit hash}`
+   - Confirm that the new tag is on the same commit as the previous tag by reviewing the git log: `git log --oneline`
    - Push the tag: `git push upstream tag agora/release/v4.0.0`
-3. Create a PR in this repo **to merge the stage branch into the prod branch**.
-4. Merge PR. Wait for the [deploy-prod GHA job](https://github.com/Sage-Bionetworks-IT/modeladexplorer-v3/actions/workflows/deploy-prod.yaml) to successfully update prod deployment. Deployment can be monitored in AWS console in AWS ECS.
+3. Create a PR in this repo **to merge the stage branch into the prod branch**. You can use this [url](https://github.com/Sage-Bionetworks-IT/agora-infra-v3/compare/prod...stage).
+4. Merge PR. Wait for the [deploy-prod GHA job](https://github.com/Sage-Bionetworks-IT/agora-infra-v3/actions/workflows/deploy-prod.yaml) to successfully update prod deployment. Deployment can be monitored in AWS console in AWS ECS.
 5. Confirm that [production site](https://agora.adknowledgeportal.org/) shows the same tag in the app footer as the staging site.
