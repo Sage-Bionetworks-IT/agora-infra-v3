@@ -63,10 +63,38 @@ def get_nonedge_tag(tags: List[str]) -> str:
     return [tag for tag in tags if tag != "edge"][0]
 
 
-def get_alternate_tag_for_edge_package_version(owner: str, package_name: str):
+def get_alternate_tag_for_edge_package_version(
+    package_name: str, owner: str = "Sage-Bionetworks"
+):
     versions = get_package_versions(owner, package_name)
     edge_version = get_edge_package_version(versions)
     return get_nonedge_tag(edge_version["metadata"]["container"]["tags"])
+
+
+def get_image_version(
+    package_name: str, configured_version: str, owner: str = "Sage-Bionetworks"
+) -> str:
+    # For 'edge', returns the alternate tag (typically commit SHA) from the edge image.
+    # For other versions, returns the configured version as-is.
+    if configured_version == "edge":
+        return get_alternate_tag_for_edge_package_version(package_name, owner)
+    return configured_version
+
+
+def get_short_commit_sha(
+    repo: str, image_tag: str, configured_version: str, owner: str = "Sage-Bionetworks"
+) -> str:
+    # Return a short (7 char) commit SHA for the given version.
+
+    # For 'edge', image_tag is typically the commit SHA. However, if a release
+    # is created for the same commit, the SHA tag moves to the release image,
+    # resulting in image_tag being 'edge'.
+    # For other versions, fetches the commit SHA from the git tag.
+
+    if configured_version == "edge":
+        return image_tag[:7]
+    commit_sha = get_commit_sha_for_tag(owner, repo, f"agora/v{image_tag}")
+    return commit_sha[:7]
 
 
 def get_commit_sha_for_tag(owner: str, repo: str, tag: str) -> str:

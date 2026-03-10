@@ -4,10 +4,7 @@ import aws_cdk as cdk
 from aws_cdk import aws_ec2 as ec2
 
 from src.ecs_stack import EcsStack
-from src.helpers.github_helpers import (
-    get_alternate_tag_for_edge_package_version,
-    get_commit_sha_for_tag,
-)
+from src.helpers.github_helpers import get_image_version, get_short_commit_sha
 from src.load_balancer_stack import LoadBalancerStack
 from src.network_stack import NetworkStack
 from src.service_props import ServiceProps, ServiceSecret
@@ -62,37 +59,19 @@ docdb_master_username = "master"
 mongodb_port = 27017
 vpn_cidr = "10.1.0.0/16"
 
-# Get image tags
-if ghcr_package_version == "edge":
-    app_tag = get_alternate_tag_for_edge_package_version(
-        "Sage-Bionetworks", "agora-app"
-    )
-    api_tag = get_alternate_tag_for_edge_package_version(
-        "Sage-Bionetworks", "agora-api"
-    )
-    api_next_tag = get_alternate_tag_for_edge_package_version(
-        "Sage-Bionetworks", "agora-api-next"
-    )
-    apex_tag = get_alternate_tag_for_edge_package_version(
-        "Sage-Bionetworks", "agora-apex"
-    )
-else:
-    app_tag = api_tag = api_next_tag = apex_tag = ghcr_package_version
+# Resolve image tags for each service
+app_version = get_image_version("agora-app", ghcr_package_version)
+api_version = get_image_version("agora-api", ghcr_package_version)
+api_next_version = get_image_version("agora-api-next", ghcr_package_version)
+apex_version = get_image_version("agora-apex", ghcr_package_version)
 
-# Get commit SHA for the version
-if ghcr_package_version == "edge":
-    # For edge, the app_tag is already the full commit SHA
-    short_commit_sha = app_tag[:7]
-else:
-    # For non-edge versions, fetch the commit SHA from the git tag
-    commit_sha = get_commit_sha_for_tag(
-        "Sage-Bionetworks", "sage-monorepo", f"agora/v{app_tag}"
-    )
-    short_commit_sha = commit_sha[:7]
+short_commit_sha = get_short_commit_sha(
+    "sage-monorepo", app_version, ghcr_package_version
+)
 
 print(
-    f"Using images: agora-app:{app_tag}, agora-api:{api_tag}, "
-    f"agora-api-next:{api_next_tag}, agora-apex:{apex_tag}"
+    f"Using images: agora-app:{app_version}, agora-api:{api_version}, "
+    f"agora-api-next:{api_next_version}, agora-apex:{apex_version}"
 )
 
 # Define stacks
@@ -145,7 +124,7 @@ load_balancer_stack = LoadBalancerStack(
 
 api_props = ServiceProps(
     container_name="agora-api",
-    container_location=f"ghcr.io/sage-bionetworks/agora-api:{api_tag}",
+    container_location=f"ghcr.io/sage-bionetworks/agora-api:{api_version}",
     container_port=3333,
     container_memory_reservation=2048,
     container_env_vars={
@@ -179,7 +158,7 @@ api_stack.service.connections.allow_to_default_port(
 
 api_next_props = ServiceProps(
     container_name="agora-api-next",
-    container_location=f"ghcr.io/sage-bionetworks/agora-api-next:{api_next_tag}",
+    container_location=f"ghcr.io/sage-bionetworks/agora-api-next:{api_next_version}",
     container_port=3334,
     container_memory_reservation=2048,
     container_env_vars={
@@ -215,16 +194,16 @@ api_next_stack.service.connections.allow_to_default_port(
 
 app_props = ServiceProps(
     container_name="agora-app",
-    container_location=f"ghcr.io/sage-bionetworks/agora-app:{app_tag}",
+    container_location=f"ghcr.io/sage-bionetworks/agora-app:{app_version}",
     container_port=4200,
     container_memory_reservation=1024,
     container_env_vars={
-        "APP_VERSION": ghcr_package_version,
+        "APP_VERSION": app_version,
         "COMMIT_SHA": short_commit_sha,
         "CSR_API_URL": f"https://{fully_qualified_domain_name}/api/v1",
         # TODO: update this port when agora-api is removed from this stack
         "SSR_API_URL": "http://agora-api:3333/v1",
-        "TAG_NAME": f"agora/v{app_tag}",
+        "TAG_NAME": f"agora/v{app_version}",
         "GOOGLE_TAG_MANAGER_ID": "GTM-WHXXVWKC",
     },
     auto_scale_min_capacity=environment_variables["AUTO_SCALE_CAPACITY"]["min"],
@@ -242,7 +221,7 @@ app_stack.add_dependency(api_next_stack)
 
 apex_props = ServiceProps(
     container_name="agora-apex",
-    container_location=f"ghcr.io/sage-bionetworks/agora-apex:{apex_tag}",
+    container_location=f"ghcr.io/sage-bionetworks/agora-apex:{apex_version}",
     container_port=80,
     container_memory_reservation=200,
     container_env_vars={
