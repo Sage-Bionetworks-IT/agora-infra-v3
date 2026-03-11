@@ -51,6 +51,7 @@ match environment:
             f"Must set environment variable `ENV` to one of {valid_envs_str}. Currently set to {environment}."
         )
 
+TAG_PREFIX = "agora/v"
 stack_name_prefix = f"agora-{environment}"
 fully_qualified_domain_name = environment_variables["FQDN"]
 environment_tags = environment_variables["TAGS"]
@@ -66,7 +67,7 @@ api_next_version = get_image_version("agora-api-next", ghcr_package_version)
 apex_version = get_image_version("agora-apex", ghcr_package_version)
 
 short_commit_sha = get_short_commit_sha(
-    "sage-monorepo", app_version, ghcr_package_version
+    "sage-monorepo", app_version, ghcr_package_version, tag_prefix=TAG_PREFIX
 )
 
 print(
@@ -203,7 +204,7 @@ app_props = ServiceProps(
         "CSR_API_URL": f"https://{fully_qualified_domain_name}/api/v1",
         # TODO: update this port when agora-api is removed from this stack
         "SSR_API_URL": "http://agora-api:3333/v1",
-        "TAG_NAME": f"agora/v{app_version}",
+        "TAG_NAME": f"{TAG_PREFIX}{app_version}",
         "GOOGLE_TAG_MANAGER_ID": "GTM-WHXXVWKC",
     },
     auto_scale_min_capacity=environment_variables["AUTO_SCALE_CAPACITY"]["min"],

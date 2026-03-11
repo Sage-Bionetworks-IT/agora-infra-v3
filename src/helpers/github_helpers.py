@@ -30,6 +30,20 @@ class PackageVersionList:
     List[PackageVersion]
 
 
+# https://docs.github.com/en/rest/git/refs?apiVersion=2022-11-28#get-a-reference
+class GitObject(TypedDict):
+    type: str
+    sha: str
+    url: str
+
+
+class GitRef(TypedDict):
+    ref: str
+    node_id: str
+    url: str
+    object: GitObject
+
+
 def get_package_versions(owner: str, package_name: str) -> PackageVersionList:
     github_token = os.environ.get("GITHUB_TOKEN")
     if not github_token:
@@ -82,7 +96,11 @@ def get_image_version(
 
 
 def get_short_commit_sha(
-    repo: str, image_tag: str, configured_version: str, owner: str = "Sage-Bionetworks"
+    repo: str,
+    image_tag: str,
+    configured_version: str,
+    owner: str = "Sage-Bionetworks",
+    tag_prefix: str = "",
 ) -> str:
     # Return a short (7 char) commit SHA for the given version.
 
@@ -93,11 +111,11 @@ def get_short_commit_sha(
 
     if configured_version == "edge":
         return image_tag[:7]
-    commit_sha = get_commit_sha_for_tag(owner, repo, f"agora/v{image_tag}")
+    commit_sha = get_commit_sha_for_tag(owner, repo, f"{tag_prefix}{image_tag}")
     return commit_sha[:7]
 
 
-def get_commit_sha_for_tag(owner: str, repo: str, tag: str) -> str:
+def get_git_ref(owner: str, repo: str, tag: str) -> GitRef:
     github_token = os.environ.get("GITHUB_TOKEN")
     if not github_token:
         raise SystemExit("Must set environment variable `GITHUB_TOKEN`.")
@@ -112,18 +130,22 @@ def get_commit_sha_for_tag(owner: str, repo: str, tag: str) -> str:
     try:
         response = requests.get(url, headers=headers)
         response.raise_for_status()
-        ref_data = response.json()
-
-        # The ref points to either a commit or a tag object
-        object_type = ref_data["object"]["type"]
-        object_sha = ref_data["object"]["sha"]
-
-        if object_type == "commit":
-            return object_sha
-        else:
-            raise SystemExit(
-                f"Error: Tag '{tag}' is not a lightweight tag (type: {object_type}). "
-                "Only lightweight tags are supported."
-            )
+        return response.json()
     except requests.exceptions.RequestException as e:
         raise SystemExit(f"Error: GitHub Tag API request failed: {e}")
+
+
+def get_commit_sha_for_tag(owner: str, repo: str, tag: str) -> str:
+    ref_data = get_git_ref(owner, repo, tag)
+
+    # The ref points to either a commit or a tag object
+    object_type = ref_data["object"]["type"]
+    object_sha = ref_data["object"]["sha"]
+
+    if object_type == "commit":
+        return object_sha
+    else:
+        raise SystemExit(
+            f"Error: Tag '{tag}' is not a lightweight tag (type: {object_type}). "
+            "Only lightweight tags are supported."
+        )
