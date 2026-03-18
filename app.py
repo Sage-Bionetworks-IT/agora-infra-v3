@@ -205,6 +205,7 @@ app_props = ServiceProps(
         # TODO: update this port when agora-api is removed from this stack
         "SSR_API_URL": "http://agora-api:3333/v1",
         "GOOGLE_TAG_MANAGER_ID": "GTM-WHXXVWKC",
+        "SENTRY_ENVIRONMENT": environment,
     },
     auto_scale_min_capacity=environment_variables["AUTO_SCALE_CAPACITY"]["min"],
     auto_scale_max_capacity=environment_variables["AUTO_SCALE_CAPACITY"]["max"],
