@@ -207,6 +207,12 @@ app_props = ServiceProps(
         "GOOGLE_TAG_MANAGER_ID": "GTM-WHXXVWKC",
         "SENTRY_ENVIRONMENT": environment,
     },
+    container_secrets=[
+        ServiceSecret(
+            secret_name="agora-sentry-dsn",
+            environment_key="SENTRY_DSN",
+        )
+    ],
     auto_scale_min_capacity=environment_variables["AUTO_SCALE_CAPACITY"]["min"],
     auto_scale_max_capacity=environment_variables["AUTO_SCALE_CAPACITY"]["max"],
 )
