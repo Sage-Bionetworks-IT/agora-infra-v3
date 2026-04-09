@@ -35,7 +35,7 @@ class DocdbStack(cdk.Stack):
         cluster_parameter_group = docdb.ClusterParameterGroup(
             self,
             "DocDbClusterParameterGroup",
-            family="docdb5.0",
+            family="docdb8.0",
             parameters={
                 "audit_logs": "disabled",
                 "profiler": "enabled",
