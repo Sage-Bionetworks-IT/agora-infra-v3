@@ -4,6 +4,11 @@ on:
   push:
     branches: ['prod']
 
+# id-token:write is required by the reusable aws-deploy workflow for OIDC.
+permissions:
+  contents: read
+  id-token: write
+
 jobs:
   test:
     uses: ./.github/workflows/test.yaml

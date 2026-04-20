@@ -6,12 +6,16 @@ on:
       environment:
         required: true
         type: string
+
+permissions:
+  contents: read
+
 jobs:
   unit-tests:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v3
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
       - name: Install dependencies
         run: pip install -r requirements.txt -r requirements-dev.txt
       - name: Run unit tests
@@ -20,7 +24,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v3
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
       - name: Install AWS CDK CLI
         run: npm install -g aws-cdk
       - name: Install dependencies
@@ -30,3 +34,17 @@ jobs:
           ENV: ${{ inputs.environment }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: cdk synth --debug --output ./cdk.out
+
+  pip-audit:
+    # Scans requirements*.txt against the PyPI advisory DB. Fails on any
+    # known CVE in a direct or transitive dependency.
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      - name: Run pip-audit
+        uses: pypa/gh-action-pip-audit@1220774d901786e6f652ae159f7b6bc8fea6d266 # v1.1.0
+        with:
+          inputs: |
+            requirements.txt
+            requirements-dev.txt
