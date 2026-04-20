@@ -5,10 +5,8 @@ on:
     branches: ['dev']
   workflow_dispatch:
 
-# id-token:write is required by the reusable aws-deploy workflow for OIDC.
 permissions:
   contents: read
-  id-token: write
 
 jobs:
   test:
@@ -16,6 +14,9 @@ jobs:
     with:
       environment: dev
   aws-deploy:
+    permissions:
+      contents: read
+      id-token: write
     uses: "./.github/workflows/aws-deploy.yaml"
     with:
       role-to-assume: "arn:aws:iam::607346494281:role/sagebase-github-oidc-agora-infra-v3"

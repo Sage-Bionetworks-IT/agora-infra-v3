@@ -25,7 +25,6 @@ on:
         required: true
         type: string
 
-# Default to least privilege; the deploy job elevates to id-token:write for OIDC.
 permissions:
   contents: read
 

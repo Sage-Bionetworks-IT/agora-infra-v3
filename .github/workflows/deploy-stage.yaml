@@ -4,10 +4,8 @@ on:
   push:
     branches: ['stage']
 
-# id-token:write is required by the reusable aws-deploy workflow for OIDC.
 permissions:
   contents: read
-  id-token: write
 
 jobs:
   test:
@@ -15,6 +13,9 @@ jobs:
     with:
       environment: stage
   aws-deploy:
+    permissions:
+      contents: read
+      id-token: write
     uses: "./.github/workflows/aws-deploy.yaml"
     with:
       role-to-assume: "arn:aws:iam::681175625864:role/sagebase-github-oidc-agora-infra-v3"
