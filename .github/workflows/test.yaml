@@ -11,40 +11,48 @@ permissions:
   contents: read
 
 jobs:
+  audit:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      - name: Set up uv
+        uses: astral-sh/setup-uv@08807647e7069bb48b6ef5acd8ec9567f424441b # v8.1.0
+        with:
+          version: "0.11.7"
+          checksum: "6681d691eb7f9c00ac6a3af54252f7ab29ae72f0c8f95bdc7f9d1401c23ea868"
+      - name: Audit dependencies
+        run: uv audit
   unit-tests:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      - name: Set up uv
+        uses: astral-sh/setup-uv@08807647e7069bb48b6ef5acd8ec9567f424441b # v8.1.0
+        with:
+          version: "0.11.7"
+          checksum: "6681d691eb7f9c00ac6a3af54252f7ab29ae72f0c8f95bdc7f9d1401c23ea868"
       - name: Install dependencies
-        run: pip install -r requirements.txt -r requirements-dev.txt
+        run: uv sync --frozen
       - name: Run unit tests
-        run: python -m pytest tests/ -s -v
+        run: uv run pytest tests/ -s -v
   synth:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
       - name: Install AWS CDK CLI
-        run: npm install -g aws-cdk
+        run: npm install -g aws-cdk@2.1007.0 --ignore-scripts
+      - name: Set up uv
+        uses: astral-sh/setup-uv@08807647e7069bb48b6ef5acd8ec9567f424441b # v8.1.0
+        with:
+          version: "0.11.7"
+          checksum: "6681d691eb7f9c00ac6a3af54252f7ab29ae72f0c8f95bdc7f9d1401c23ea868"
       - name: Install dependencies
-        run: pip install -r requirements.txt -r requirements-dev.txt
+        run: uv sync --frozen --no-group dev
       - name: Generate cloudformation
         env:
           ENV: ${{ inputs.environment }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: cdk synth --debug --output ./cdk.out
-
-  pip-audit:
-    # Scans requirements*.txt against the PyPI advisory DB. Fails on any
-    # known CVE in a direct or transitive dependency.
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
-      - name: Run pip-audit
-        uses: pypa/gh-action-pip-audit@1220774d901786e6f652ae159f7b6bc8fea6d266 # v1.1.0
-        with:
-          inputs: |
-            requirements.txt
-            requirements-dev.txt
+        run: uv run cdk synth --debug --output ./cdk.out
