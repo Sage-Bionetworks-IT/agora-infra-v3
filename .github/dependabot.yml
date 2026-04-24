@@ -28,3 +28,14 @@ updates:
     directory: /
     schedule:
       interval: weekly
+
+  # Pre-commit hooks (.pre-commit-config.yaml).
+  - package-ecosystem: pre-commit
+    directory: /
+    schedule:
+      interval: weekly
+    groups:
+      minor-and-patch:
+        update-types:
+          - minor
+          - patch
