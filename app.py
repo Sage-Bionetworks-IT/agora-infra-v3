@@ -89,28 +89,7 @@ network_stack = NetworkStack(
     vpc_cidr=environment_variables["VPC_CIDR"],
 )
 
-# Existing DocumentDB 5.0 cluster as fallback during 8.0 migration
-# TODO: remove this stack after migration is complete
-docdb_props = DocdbProps(
-    instance_type=ec2.InstanceType.of(
-        ec2.InstanceClass.MEMORY5, ec2.InstanceSize.LARGE
-    ),
-    master_username=docdb_master_username,
-    port=mongodb_port,
-    family="docdb5.0",
-    engine_version="5.0.0",
-)
-docdb_stack = DocdbStack(
-    scope=cdk_app,
-    construct_id=f"{stack_name_prefix}-docdb",
-    vpc=network_stack.vpc,
-    props=docdb_props,
-)
-docdb_stack.cluster.connections.allow_from(
-    ec2.Peer.ipv4(vpn_cidr), ec2.Port.all_traffic(), "Allow all VPN traffic"
-)
-
-# New DocumentDB 8.0 cluster
+# DocumentDB 8.0 cluster
 docdb_v8_props = DocdbProps(
     instance_type=ec2.InstanceType.of(
         ec2.InstanceClass.MEMORY5, ec2.InstanceSize.LARGE
