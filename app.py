@@ -206,6 +206,7 @@ app_props = ServiceProps(
         "SSR_API_URL": "http://agora-api:3333/v1",
         "GOOGLE_TAG_MANAGER_ID": "GTM-WHXXVWKC",
         "SENTRY_ENVIRONMENT": environment,
+        "SENTRY_RELEASE": f"agora@{ghcr_package_version}+{short_commit_sha}",
     },
     container_secrets=[
         ServiceSecret(
