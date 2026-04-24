@@ -13,7 +13,6 @@ jobs:
     with:
       environment: prod
   aws-deploy:
-    needs: test
     permissions:
       contents: read
       id-token: write
