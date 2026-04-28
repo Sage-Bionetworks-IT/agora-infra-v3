@@ -19,7 +19,7 @@ class EcsStack(cdk.Stack):
         construct_id: str,
         vpc: ec2.Vpc,
         namespace: str,
-        **kwargs
+        **kwargs,
     ) -> None:
         super().__init__(scope, construct_id, **kwargs)
 

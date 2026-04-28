@@ -1,2 +1,0 @@
-pre-commit~=3.8
-pytest~=8.3.0

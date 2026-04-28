@@ -4,12 +4,19 @@ on:
   push:
     branches: ['prod']
 
+permissions:
+  contents: read
+
 jobs:
   test:
     uses: ./.github/workflows/test.yaml
     with:
       environment: prod
   aws-deploy:
+    needs: test
+    permissions:
+      contents: read
+      id-token: write
     uses: "./.github/workflows/aws-deploy.yaml"
     with:
       role-to-assume: "arn:aws:iam::681175625864:role/sagebase-github-oidc-agora-infra-v3"
