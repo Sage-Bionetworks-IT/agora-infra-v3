@@ -2,7 +2,7 @@
   "name": "AWS CDK & Python Development Environment",
   "image": "mcr.microsoft.com/devcontainers/base:ubuntu-22.04",
   "features": {
-    "ghcr.io/devcontainers/features/node:1.5.0": {
+    "ghcr.io/devcontainers/features/node:2.0.0": {
       "version": "22.6.0"
     },
     "ghcr.io/devcontainers/features/python:1.6.3": {
