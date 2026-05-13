@@ -40,7 +40,7 @@ All the development tools are provided when developing inside the dev container
 also include a Python virtual environment where all the Python packages needed
 are already installed.
 
-If you decide the develop outside of the dev container, you'll need
+If you decide to develop outside of the dev container, you'll need
 [uv](https://docs.astral.sh/uv/getting-started/installation/) installed.
 Then run:
 
