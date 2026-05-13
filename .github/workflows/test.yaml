@@ -3,9 +3,14 @@ name: test
 on:
   workflow_call:
     inputs:
-      environment:
+      # aws-environment accepts one of three values:
+      #   'dev' / 'stage' / 'prod' - the AWS deployment target
+      aws-environment:
         required: true
         type: string
+      # ref accepts one of four values:
+      #   'dev' / 'stage' / 'prod' - pin checkout to that env branch  (deploy-*.yaml)
+      #   ''                       - check out the PR's commit        (pr-check.yaml; ref omitted)
       ref:
         required: false
         type: string
@@ -64,6 +69,6 @@ jobs:
         run: uv sync --frozen --no-group dev
       - name: Generate cloudformation
         env:
-          ENV: ${{ inputs.environment }}
+          ENV: ${{ inputs.aws-environment }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: uv run cdk synth --debug --output ./cdk.out

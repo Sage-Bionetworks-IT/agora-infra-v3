@@ -12,8 +12,8 @@ jobs:
   test:
     uses: ./.github/workflows/test.yaml
     with:
-      environment: dev  # AWS account / env name
-      ref: dev          # git branch to check out (matches env by convention)
+      aws-environment: dev
+      ref: dev  # git branch to check out
   aws-deploy:
     needs: test
     permissions:
@@ -23,4 +23,4 @@ jobs:
     with:
       role-to-assume: "arn:aws:iam::607346494281:role/sagebase-github-oidc-agora-infra-v3"
       role-session-name: ${{ github.repository_owner }}-${{ github.event.repository.name }}-${{ github.run_id }}
-      environment: dev
+      aws-environment: dev
