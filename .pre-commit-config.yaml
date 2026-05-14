@@ -1,26 +1,29 @@
 ci:
   autoupdate_schedule: monthly
+  # uv-audit queries api.osv.dev for CVEs. pre-commit.ci blocks outbound
+  # network during hook execution, so the GHA audit job in test.yaml runs it instead.
+  skip: [uv-audit]
 
 default_language_version:
   python: python3
 
 repos:
   - repo: https://github.com/pre-commit/pre-commit-hooks
-    rev: cef0300fd0fc4d2a87a85fa2093c6b283ea36f4b # v5.0.0
+    rev: 3e8a8703264a2f4a69428a0aa4dcb512790b2c8c # v6.0.0
     hooks:
       - id: end-of-file-fixer
       - id: mixed-line-ending
       - id: trailing-whitespace
   - repo: https://github.com/PyCQA/flake8
-    rev: cf1542cefa3e766670b2066dd75c4571d682a649 # 7.1.1
+    rev: d93590f5be797aabb60e3b09f2f52dddb02f349f # 7.3.0
     hooks:
       - id: flake8
   - repo: https://github.com/adrienverge/yamllint
-    rev: 81e9f98ffd059efe8aa9c1b1a42e5cce61b640c6 # v1.35.1
+    rev: cba56bcde1fdd01c1deb3f945e69764c291a6530 # v1.38.0
     hooks:
       - id: yamllint
   - repo: https://github.com/awslabs/cfn-python-lint
-    rev: f5084b0c87696260c4ccfcc77105a203a4679143 # v1.22.3
+    rev: 9823e89806e500c98f3ddb6efbe454a840b27136 # v1.50.1
     hooks:
       - id: cfn-python-lint
         args:
@@ -34,16 +37,20 @@ repos:
             ^.github/|
             ^.pre-commit-config.yaml
           )
-  - repo: https://github.com/psf/black
-    rev: 1b2427a2b785cc4aac97c19bb4b9a0de063f9547 # 24.10.0
+  - repo: https://github.com/psf/black-pre-commit-mirror
+    rev: fa505ab9c3e0fedafe1709fd7ac2b5f8996c670d # 26.3.1
     hooks:
       - id: black
   - repo: https://github.com/astral-sh/uv-pre-commit
     rev: 6a280ba12b7901e47757c868c8c13c6a624c9ecb # 0.11.7
     hooks:
       - id: uv-lock
+      # Runs locally when uv.lock, pyproject.toml, or uv.toml are part of
+      # the commit, and on every PR via the GHA audit job in test.yaml.
+      # Skipped on pre-commit.ci (see ci.skip comment above).
+      - id: uv-audit
   - repo: https://github.com/sirosen/check-jsonschema
-    rev: 9932a7df36a32ef5e79dfd5df26ad89ca15bfa61 # 0.30.0
+    rev: 943377262562a12b57292fc98fabd7dbf81451fe # 0.37.2
     hooks:
       - id: check-github-workflows
       - id: check-github-actions
