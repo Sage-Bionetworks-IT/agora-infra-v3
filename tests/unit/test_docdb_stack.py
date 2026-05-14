@@ -19,6 +19,8 @@ def test_docdb_created():
         ),
         master_username=master_username,
         port=port,
+        family="docdb8.0",
+        engine_version="8.0.0",
     )
     docdb_stack = DocdbStack(
         scope=cdk_app,
@@ -31,6 +33,7 @@ def test_docdb_created():
     template.has_resource_properties(
         "AWS::DocDB::DBClusterParameterGroup",
         {
+            "Family": "docdb8.0",
             "Parameters": {
                 "audit_logs": "disabled",
                 "profiler": "enabled",
@@ -39,12 +42,13 @@ def test_docdb_created():
                 "change_stream_log_retention_duration": "10800",
                 "tls": "disabled",
                 "ttl_monitor": "disabled",
-            }
+            },
         },
     )
     template.has_resource_properties(
         "AWS::DocDB::DBCluster",
         {
+            "EngineVersion": "8.0.0",
             "MasterUsername": master_username,
             "MasterUserPassword": assertions.Match.any_value(),
             "DBSubnetGroupName": assertions.Match.any_value(),

@@ -4,7 +4,7 @@ import aws_cdk as cdk
 from aws_cdk import aws_ec2 as ec2
 
 from src.ecs_stack import EcsStack
-from src.helpers.get_package_version import get_alternate_tag_for_edge_package_version
+from src.helpers.github_helpers import get_image_version, get_short_commit_sha
 from src.load_balancer_stack import LoadBalancerStack
 from src.network_stack import NetworkStack
 from src.service_props import ServiceProps, ServiceSecret
@@ -25,7 +25,7 @@ match environment:
             "CERTIFICATE_ID": "69b3ba97-b382-4648-8f94-a250b77b4994",
             "TAGS": {"CostCenter": "AMP-AD DCC / 101500", "Environment": "prod"},
             "AUTO_SCALE_CAPACITY": {"min": 2, "max": 4},
-            "GHCR_PACKAGE_VERSION": "4.2.0-rc2",
+            "GHCR_PACKAGE_VERSION": "4.2.1-rc1",
         }
     case "stage":
         environment_variables = {
@@ -34,7 +34,7 @@ match environment:
             "CERTIFICATE_ID": "69b3ba97-b382-4648-8f94-a250b77b4994",
             "TAGS": {"CostCenter": "AMP-AD DCC / 101500", "Environment": "stage"},
             "AUTO_SCALE_CAPACITY": {"min": 2, "max": 4},
-            "GHCR_PACKAGE_VERSION": "4.2.0-rc2",
+            "GHCR_PACKAGE_VERSION": "4.2.1-rc1",
         }
     case "dev":
         environment_variables = {
@@ -51,6 +51,7 @@ match environment:
             f"Must set environment variable `ENV` to one of {valid_envs_str}. Currently set to {environment}."
         )
 
+TAG_PREFIX = "agora/v"
 stack_name_prefix = f"agora-{environment}"
 fully_qualified_domain_name = environment_variables["FQDN"]
 environment_tags = environment_variables["TAGS"]
@@ -59,22 +60,15 @@ docdb_master_username = "master"
 mongodb_port = 27017
 vpn_cidr = "10.1.0.0/16"
 
-# Get image versions
-if ghcr_package_version == "edge":
-    app_version = get_alternate_tag_for_edge_package_version(
-        "Sage-Bionetworks", "agora-app"
-    )
-    api_version = get_alternate_tag_for_edge_package_version(
-        "Sage-Bionetworks", "agora-api"
-    )
-    api_next_version = get_alternate_tag_for_edge_package_version(
-        "Sage-Bionetworks", "agora-api-next"
-    )
-    apex_version = get_alternate_tag_for_edge_package_version(
-        "Sage-Bionetworks", "agora-apex"
-    )
-else:
-    app_version = api_version = api_next_version = apex_version = ghcr_package_version
+# Resolve image tags for each service
+app_version = get_image_version("agora-app", ghcr_package_version)
+api_version = get_image_version("agora-api", ghcr_package_version)
+api_next_version = get_image_version("agora-api-next", ghcr_package_version)
+apex_version = get_image_version("agora-apex", ghcr_package_version)
+
+short_commit_sha = get_short_commit_sha(
+    "sage-monorepo", app_version, ghcr_package_version, tag_prefix=TAG_PREFIX
+)
 
 print(
     f"Using images: agora-app:{app_version}, agora-api:{api_version}, "
@@ -95,20 +89,23 @@ network_stack = NetworkStack(
     vpc_cidr=environment_variables["VPC_CIDR"],
 )
 
-docdb_props = DocdbProps(
+# DocumentDB 8.0 cluster
+docdb_v8_props = DocdbProps(
     instance_type=ec2.InstanceType.of(
         ec2.InstanceClass.MEMORY5, ec2.InstanceSize.LARGE
     ),
     master_username=docdb_master_username,
     port=mongodb_port,
+    family="docdb8.0",
+    engine_version="8.0.0",
 )
-docdb_stack = DocdbStack(
+docdb_v8_stack = DocdbStack(
     scope=cdk_app,
-    construct_id=f"{stack_name_prefix}-docdb",
+    construct_id=f"{stack_name_prefix}-docdb-v8",
     vpc=network_stack.vpc,
-    props=docdb_props,
+    props=docdb_v8_props,
 )
-docdb_stack.cluster.connections.allow_from(
+docdb_v8_stack.cluster.connections.allow_from(
     ec2.Peer.ipv4(vpn_cidr), ec2.Port.all_traffic(), "Allow all VPN traffic"
 )
 
@@ -139,11 +136,11 @@ api_props = ServiceProps(
         "MONGODB_PORT": f"{mongodb_port}",
         "MONGODB_NAME": "agora",
         "MONGODB_USER": docdb_master_username,
-        "MONGODB_HOST": docdb_stack.cluster.cluster_endpoint.hostname,
+        "MONGODB_HOST": docdb_v8_stack.cluster.cluster_endpoint.hostname,
     },
     container_secrets=[
         ServiceSecret(
-            secret_name=docdb_stack.master_password_secret.secret_name,
+            secret_name=docdb_v8_stack.master_password_secret.secret_name,
             environment_key="MONGODB_PASS",
         )
     ],
@@ -157,9 +154,9 @@ api_stack = ServiceStack(
     cluster=ecs_stack.cluster,
     props=api_props,
 )
-api_stack.add_dependency(docdb_stack)
+api_stack.add_dependency(docdb_v8_stack)
 api_stack.service.connections.allow_to_default_port(
-    docdb_stack.cluster,
+    docdb_v8_stack.cluster,
     "Allow API container to connect to DocumentDB cluster",
 )
 
@@ -170,7 +167,7 @@ api_next_props = ServiceProps(
     container_memory_reservation=2048,
     container_env_vars={
         "SERVER_PORT": "3334",
-        "SPRING_DATA_MONGODB_HOST": docdb_stack.cluster.cluster_endpoint.hostname,
+        "SPRING_DATA_MONGODB_HOST": docdb_v8_stack.cluster.cluster_endpoint.hostname,
         "SPRING_DATA_MONGODB_PORT": f"{mongodb_port}",
         "SPRING_DATA_MONGODB_DATABASE": "agora",
         "SPRING_DATA_MONGODB_USERNAME": docdb_master_username,
@@ -179,7 +176,7 @@ api_next_props = ServiceProps(
     },
     container_secrets=[
         ServiceSecret(
-            secret_name=docdb_stack.master_password_secret.secret_name,
+            secret_name=docdb_v8_stack.master_password_secret.secret_name,
             environment_key="SPRING_DATA_MONGODB_PASSWORD",
         )
     ],
@@ -193,9 +190,9 @@ api_next_stack = ServiceStack(
     cluster=ecs_stack.cluster,
     props=api_next_props,
 )
-api_next_stack.add_dependency(docdb_stack)
+api_next_stack.add_dependency(docdb_v8_stack)
 api_next_stack.service.connections.allow_to_default_port(
-    docdb_stack.cluster,
+    docdb_v8_stack.cluster,
     "Allow API Next container to connect to DocumentDB cluster",
 )
 
@@ -205,13 +202,21 @@ app_props = ServiceProps(
     container_port=4200,
     container_memory_reservation=1024,
     container_env_vars={
-        "APP_VERSION": f"{app_version}",
+        "APP_VERSION": app_version,
+        "COMMIT_SHA": short_commit_sha,
         "CSR_API_URL": f"https://{fully_qualified_domain_name}/api/v1",
         # TODO: update this port when agora-api is removed from this stack
         "SSR_API_URL": "http://agora-api:3333/v1",
-        "TAG_NAME": f"agora/v{app_version}",
         "GOOGLE_TAG_MANAGER_ID": "GTM-WHXXVWKC",
+        "SENTRY_ENVIRONMENT": environment,
+        "SENTRY_RELEASE": f"agora@{ghcr_package_version}+{short_commit_sha}",
     },
+    container_secrets=[
+        ServiceSecret(
+            secret_name="agora-sentry-dsn",
+            environment_key="SENTRY_DSN",
+        )
+    ],
     auto_scale_min_capacity=environment_variables["AUTO_SCALE_CAPACITY"]["min"],
     auto_scale_max_capacity=environment_variables["AUTO_SCALE_CAPACITY"]["max"],
 )
@@ -268,10 +273,10 @@ bastion_stack = BastionStack(
     props=bastion_props,
 )
 bastion_stack.instance.connections.allow_to(
-    docdb_stack.cluster,
+    docdb_v8_stack.cluster,
     ec2.Port.tcp_range(mongodb_port, 27030),
     "Allow bastion host to connect to DocumentDB cluster",
 )
-bastion_stack.add_dependency(docdb_stack)
+bastion_stack.add_dependency(docdb_v8_stack)
 
 cdk_app.synth()

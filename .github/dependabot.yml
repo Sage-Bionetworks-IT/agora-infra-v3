@@ -1,0 +1,30 @@
+version: 2
+updates:
+  # Keep GitHub Actions pinned-SHA references current. Dependabot understands
+  # the `uses: owner/repo@<sha> # vX.Y.Z` pattern and will bump both.
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+    groups:
+      minor-and-patch:
+        update-types:
+          - minor
+          - patch
+
+  # Python runtime dependencies (pyproject.toml + uv.lock).
+  - package-ecosystem: uv
+    directory: /
+    schedule:
+      interval: weekly
+    groups:
+      minor-and-patch:
+        update-types:
+          - minor
+          - patch
+
+  # Dev container features (.devcontainer/devcontainer.json).
+  - package-ecosystem: devcontainers
+    directory: /
+    schedule:
+      interval: weekly

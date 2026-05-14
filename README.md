@@ -40,28 +40,28 @@ All the development tools are provided when developing inside the dev container
 also include a Python virtual environment where all the Python packages needed
 are already installed.
 
-If you decide the develop outside of the dev container, some of the development
-tools can be installed by running:
+If you decide to develop outside of the dev container, you'll need
+[uv](https://docs.astral.sh/uv/getting-started/installation/) installed.
+Then run:
 
 ```console
 ./tools/setup.sh
 ```
 
-Development requires the activation of the Python virtual environment:
+This creates a `.venv` and installs Python dependencies from `uv.lock`.
+Run Python commands via `uv run` so they execute inside the managed env:
 
 ```console
-$ source .venv/bin/activate
+$ uv run cdk synth
 ```
 
-At this point you can now synthesize the CloudFormation template for this code.
+(You can also `source .venv/bin/activate` once and drop the `uv run` prefix
+for the rest of your shell session.)
 
-```
-$ cdk synth
-```
-
-To add additional dependencies, for example other CDK libraries, just add
-them to your `setup.py` file and rerun the `pip install -r requirements.txt`
-command.
+To add or remove dependencies, use `uv add <pkg>` / `uv add --group dev <pkg>` /
+`uv remove <pkg>`. These commands update both `pyproject.toml` and `uv.lock`
+automatically. The `uv-lock` pre-commit hook also keeps the lockfile in sync
+when `pyproject.toml` changes.
 
 ## Useful commands
 
@@ -93,7 +93,7 @@ ENV="dev"
 Verify CDK to Cloudformation conversion by running [cdk synth]:
 
 ```console
-env $(cat .env | xargs) cdk synth
+env $(cat .env | xargs) uv run cdk synth
 ```
 
 The Cloudformation output is saved to the `cdk.out` folder
@@ -103,7 +103,7 @@ The Cloudformation output is saved to the `cdk.out` folder
 Tests are available in the tests folder. Execute the following to run tests:
 
 ```
-python -m pytest tests/ -s -v
+uv run pytest tests/ -s -v
 ```
 
 
@@ -305,7 +305,7 @@ Deployment requires setting up an [AWS profile](https://docs.aws.amazon.com/cli/
 then executing the following command:
 
 ```console
-env $(cat .env | xargs) AWS_PROFILE=itsandbox-dev AWS_DEFAULT_REGION=us-east-1 cdk deploy --all
+env $(cat .env | xargs) AWS_PROFILE=itsandbox-dev AWS_DEFAULT_REGION=us-east-1 uv run cdk deploy --all
 ```
 
 ## Force new deployment

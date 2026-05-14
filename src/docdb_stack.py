@@ -35,7 +35,7 @@ class DocdbStack(cdk.Stack):
         cluster_parameter_group = docdb.ClusterParameterGroup(
             self,
             "DocDbClusterParameterGroup",
-            family="docdb5.0",
+            family=props.family,
             parameters={
                 "audit_logs": "disabled",
                 "profiler": "enabled",
@@ -55,6 +55,7 @@ class DocdbStack(cdk.Stack):
                 username=props.master_username,
                 password=self.master_password_secret.secret_value,
             ),
+            engine_version=props.engine_version,
             instance_type=props.instance_type,
             vpc=vpc,
             vpc_subnets=ec2.SubnetSelection(
