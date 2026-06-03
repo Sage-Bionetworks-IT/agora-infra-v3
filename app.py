@@ -26,6 +26,8 @@ match environment:
             "TAGS": {"CostCenter": "AMP-AD DCC / 101500", "Environment": "prod"},
             "AUTO_SCALE_CAPACITY": {"min": 2, "max": 4},
             "GHCR_PACKAGE_VERSION": "4.2.0-rc2",
+            "GTM_ENABLED": "true",
+            "GTM_CONTAINER_ID": "GTM-WHXXVWKC",
         }
     case "stage":
         environment_variables = {
@@ -35,6 +37,8 @@ match environment:
             "TAGS": {"CostCenter": "AMP-AD DCC / 101500", "Environment": "stage"},
             "AUTO_SCALE_CAPACITY": {"min": 2, "max": 4},
             "GHCR_PACKAGE_VERSION": "4.2.0-rc2",
+            "GTM_ENABLED": "false",
+            "GTM_CONTAINER_ID": "",
         }
     case "dev":
         environment_variables = {
@@ -44,6 +48,8 @@ match environment:
             "TAGS": {"CostCenter": "AMP-AD DCC / 101500", "Environment": "dev"},
             "AUTO_SCALE_CAPACITY": {"min": 1, "max": 2},
             "GHCR_PACKAGE_VERSION": "edge",
+            "GTM_ENABLED": "false",
+            "GTM_CONTAINER_ID": "",
         }
     case _:
         valid_envs_str = ",".join(VALID_ENVIRONMENTS)
@@ -207,7 +213,9 @@ app_props = ServiceProps(
         "CSR_API_URL": f"https://{fully_qualified_domain_name}/api/v1",
         # TODO: update this port when agora-api is removed from this stack
         "SSR_API_URL": "http://agora-api:3333/v1",
-        "GOOGLE_TAG_MANAGER_ID": "GTM-WHXXVWKC",
+        "ENVIRONMENT": environment,
+        "GOOGLE_TAG_MANAGER_ENABLED": environment_variables["GTM_ENABLED"],
+        "GOOGLE_TAG_MANAGER_ID": environment_variables["GTM_CONTAINER_ID"],
         "SENTRY_ENVIRONMENT": environment,
         "SENTRY_RELEASE": f"agora@{ghcr_package_version}+{short_commit_sha}",
     },
