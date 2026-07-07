@@ -25,7 +25,9 @@ match environment:
             "CERTIFICATE_ID": "69b3ba97-b382-4648-8f94-a250b77b4994",
             "TAGS": {"CostCenter": "AMP-AD DCC / 101500", "Environment": "prod"},
             "AUTO_SCALE_CAPACITY": {"min": 2, "max": 4},
-            "GHCR_PACKAGE_VERSION": "4.2.0-rc2",
+            "GHCR_PACKAGE_VERSION": "4.3.0-rc1",
+            "GTM_ENABLED": "true",
+            "GTM_CONTAINER_ID": "GTM-WHXXVWKC",
         }
     case "stage":
         environment_variables = {
@@ -34,7 +36,9 @@ match environment:
             "CERTIFICATE_ID": "69b3ba97-b382-4648-8f94-a250b77b4994",
             "TAGS": {"CostCenter": "AMP-AD DCC / 101500", "Environment": "stage"},
             "AUTO_SCALE_CAPACITY": {"min": 2, "max": 4},
-            "GHCR_PACKAGE_VERSION": "4.2.0-rc2",
+            "GHCR_PACKAGE_VERSION": "4.3.0-rc1",
+            "GTM_ENABLED": "false",
+            "GTM_CONTAINER_ID": "",
         }
     case "dev":
         environment_variables = {
@@ -44,6 +48,8 @@ match environment:
             "TAGS": {"CostCenter": "AMP-AD DCC / 101500", "Environment": "dev"},
             "AUTO_SCALE_CAPACITY": {"min": 1, "max": 2},
             "GHCR_PACKAGE_VERSION": "edge",
+            "GTM_ENABLED": "false",
+            "GTM_CONTAINER_ID": "",
         }
     case _:
         valid_envs_str = ",".join(VALID_ENVIRONMENTS)
@@ -89,8 +95,7 @@ network_stack = NetworkStack(
     vpc_cidr=environment_variables["VPC_CIDR"],
 )
 
-# DocumentDB 8.0 cluster
-docdb_v8_props = DocdbProps(
+docdb_props = DocdbProps(
     instance_type=ec2.InstanceType.of(
         ec2.InstanceClass.MEMORY5, ec2.InstanceSize.LARGE
     ),
@@ -99,13 +104,13 @@ docdb_v8_props = DocdbProps(
     family="docdb8.0",
     engine_version="8.0.0",
 )
-docdb_v8_stack = DocdbStack(
+docdb_stack = DocdbStack(
     scope=cdk_app,
     construct_id=f"{stack_name_prefix}-docdb-v8",
     vpc=network_stack.vpc,
-    props=docdb_v8_props,
+    props=docdb_props,
 )
-docdb_v8_stack.cluster.connections.allow_from(
+docdb_stack.cluster.connections.allow_from(
     ec2.Peer.ipv4(vpn_cidr), ec2.Port.all_traffic(), "Allow all VPN traffic"
 )
 
@@ -136,11 +141,11 @@ api_props = ServiceProps(
         "MONGODB_PORT": f"{mongodb_port}",
         "MONGODB_NAME": "agora",
         "MONGODB_USER": docdb_master_username,
-        "MONGODB_HOST": docdb_v8_stack.cluster.cluster_endpoint.hostname,
+        "MONGODB_HOST": docdb_stack.cluster.cluster_endpoint.hostname,
     },
     container_secrets=[
         ServiceSecret(
-            secret_name=docdb_v8_stack.master_password_secret.secret_name,
+            secret_name=docdb_stack.master_password_secret.secret_name,
             environment_key="MONGODB_PASS",
         )
     ],
@@ -154,9 +159,9 @@ api_stack = ServiceStack(
     cluster=ecs_stack.cluster,
     props=api_props,
 )
-api_stack.add_dependency(docdb_v8_stack)
+api_stack.add_dependency(docdb_stack)
 api_stack.service.connections.allow_to_default_port(
-    docdb_v8_stack.cluster,
+    docdb_stack.cluster,
     "Allow API container to connect to DocumentDB cluster",
 )
 
@@ -167,7 +172,7 @@ api_next_props = ServiceProps(
     container_memory_reservation=2048,
     container_env_vars={
         "SERVER_PORT": "3334",
-        "SPRING_DATA_MONGODB_HOST": docdb_v8_stack.cluster.cluster_endpoint.hostname,
+        "SPRING_DATA_MONGODB_HOST": docdb_stack.cluster.cluster_endpoint.hostname,
         "SPRING_DATA_MONGODB_PORT": f"{mongodb_port}",
         "SPRING_DATA_MONGODB_DATABASE": "agora",
         "SPRING_DATA_MONGODB_USERNAME": docdb_master_username,
@@ -176,7 +181,7 @@ api_next_props = ServiceProps(
     },
     container_secrets=[
         ServiceSecret(
-            secret_name=docdb_v8_stack.master_password_secret.secret_name,
+            secret_name=docdb_stack.master_password_secret.secret_name,
             environment_key="SPRING_DATA_MONGODB_PASSWORD",
         )
     ],
@@ -190,9 +195,9 @@ api_next_stack = ServiceStack(
     cluster=ecs_stack.cluster,
     props=api_next_props,
 )
-api_next_stack.add_dependency(docdb_v8_stack)
+api_next_stack.add_dependency(docdb_stack)
 api_next_stack.service.connections.allow_to_default_port(
-    docdb_v8_stack.cluster,
+    docdb_stack.cluster,
     "Allow API Next container to connect to DocumentDB cluster",
 )
 
@@ -207,7 +212,9 @@ app_props = ServiceProps(
         "CSR_API_URL": f"https://{fully_qualified_domain_name}/api/v1",
         # TODO: update this port when agora-api is removed from this stack
         "SSR_API_URL": "http://agora-api:3333/v1",
-        "GOOGLE_TAG_MANAGER_ID": "GTM-WHXXVWKC",
+        "ENVIRONMENT": environment,
+        "GOOGLE_TAG_MANAGER_ENABLED": environment_variables["GTM_ENABLED"],
+        "GOOGLE_TAG_MANAGER_ID": environment_variables["GTM_CONTAINER_ID"],
         "SENTRY_ENVIRONMENT": environment,
         "SENTRY_RELEASE": f"agora@{ghcr_package_version}+{short_commit_sha}",
     },
@@ -273,10 +280,10 @@ bastion_stack = BastionStack(
     props=bastion_props,
 )
 bastion_stack.instance.connections.allow_to(
-    docdb_v8_stack.cluster,
+    docdb_stack.cluster,
     ec2.Port.tcp_range(mongodb_port, 27030),
     "Allow bastion host to connect to DocumentDB cluster",
 )
-bastion_stack.add_dependency(docdb_v8_stack)
+bastion_stack.add_dependency(docdb_stack)
 
 cdk_app.synth()
