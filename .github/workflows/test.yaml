@@ -3,30 +3,72 @@ name: test
 on:
   workflow_call:
     inputs:
-      environment:
+      # aws-environment accepts one of three values:
+      #   'dev' / 'stage' / 'prod' - the AWS deployment target
+      aws-environment:
         required: true
         type: string
+      # ref accepts one of four values:
+      #   'dev' / 'stage' / 'prod' - pin checkout to that env branch  (deploy-*.yaml)
+      #   ''                       - check out the PR's commit        (pr-check.yaml; ref omitted)
+      ref:
+        required: false
+        type: string
+        default: ''
+
+permissions:
+  contents: read
+
 jobs:
+  audit:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          ref: ${{ inputs.ref }}
+      - name: Set up Python
+        uses: actions/setup-python@e797f83bcb11b83ae66e0230d6156d7c80228e7c # v6.0.0
+        with:
+          python-version-file: pyproject.toml
+      - name: Run uv-audit hook
+        uses: pre-commit/action@2c7b3805fd2a0fd8c1884dcaebf91fc102a13ecd # v3.0.1
+        with:
+          extra_args: uv-audit --all-files
   unit-tests:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v3
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          ref: ${{ inputs.ref }}
+      - name: Set up uv
+        uses: astral-sh/setup-uv@08807647e7069bb48b6ef5acd8ec9567f424441b # v8.1.0
+        with:
+          version: "0.11.7"
+          checksum: "6681d691eb7f9c00ac6a3af54252f7ab29ae72f0c8f95bdc7f9d1401c23ea868"
       - name: Install dependencies
-        run: pip install -r requirements.txt -r requirements-dev.txt
+        run: uv sync --frozen
       - name: Run unit tests
-        run: python -m pytest tests/ -s -v
+        run: uv run pytest tests/ -s -v
   synth:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v3
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          ref: ${{ inputs.ref }}
       - name: Install AWS CDK CLI
-        run: npm install -g aws-cdk
+        run: npm install -g aws-cdk@2.1007.0 --ignore-scripts
+      - name: Set up uv
+        uses: astral-sh/setup-uv@08807647e7069bb48b6ef5acd8ec9567f424441b # v8.1.0
+        with:
+          version: "0.11.7"
+          checksum: "6681d691eb7f9c00ac6a3af54252f7ab29ae72f0c8f95bdc7f9d1401c23ea868"
       - name: Install dependencies
-        run: pip install -r requirements.txt -r requirements-dev.txt
+        run: uv sync --frozen --no-group dev
       - name: Generate cloudformation
         env:
-          ENV: ${{ inputs.environment }}
+          ENV: ${{ inputs.aws-environment }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: cdk synth --debug --output ./cdk.out
+        run: uv run cdk synth --debug --output ./cdk.out
