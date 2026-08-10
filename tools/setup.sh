@@ -34,7 +34,7 @@ if ! command -v uv >/dev/null; then
 fi
 
 # Install Node.js dependencies
-npm install -g aws-cdk@2.1007.0 --ignore-scripts
+npm install -g aws-cdk@2.1135.1 --ignore-scripts
 
 # Install Python dependencies (creates .venv, installs from uv.lock)
 uv sync

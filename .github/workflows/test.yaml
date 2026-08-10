@@ -59,7 +59,7 @@ jobs:
         with:
           ref: ${{ inputs.ref }}
       - name: Install AWS CDK CLI
-        run: npm install -g aws-cdk@2.1007.0 --ignore-scripts
+        run: npm install -g aws-cdk@2.1135.1 --ignore-scripts
       - name: Set up uv
         uses: astral-sh/setup-uv@08807647e7069bb48b6ef5acd8ec9567f424441b # v8.1.0
         with:
