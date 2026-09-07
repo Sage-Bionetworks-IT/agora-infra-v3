@@ -9,21 +9,21 @@ default_language_version:
 
 repos:
   - repo: https://github.com/pre-commit/pre-commit-hooks
-    rev: 3e8a8703264a2f4a69428a0aa4dcb512790b2c8c # v6.0.0
+    rev: v6.0.0 # v6.0.0
     hooks:
       - id: end-of-file-fixer
       - id: mixed-line-ending
       - id: trailing-whitespace
   - repo: https://github.com/PyCQA/flake8
-    rev: d93590f5be797aabb60e3b09f2f52dddb02f349f # 7.3.0
+    rev: 7.3.0 # 7.3.0
     hooks:
       - id: flake8
   - repo: https://github.com/adrienverge/yamllint
-    rev: cba56bcde1fdd01c1deb3f945e69764c291a6530 # v1.38.0
+    rev: v1.38.0 # v1.38.0
     hooks:
       - id: yamllint
   - repo: https://github.com/awslabs/cfn-python-lint
-    rev: 9823e89806e500c98f3ddb6efbe454a840b27136 # v1.50.1
+    rev: v1.56.0 # v1.50.1
     hooks:
       - id: cfn-python-lint
         args:
@@ -38,11 +38,11 @@ repos:
             ^.pre-commit-config.yaml
           )
   - repo: https://github.com/psf/black-pre-commit-mirror
-    rev: fa505ab9c3e0fedafe1709fd7ac2b5f8996c670d # 26.3.1
+    rev: 26.5.1 # 26.3.1
     hooks:
       - id: black
   - repo: https://github.com/astral-sh/uv-pre-commit
-    rev: 6a280ba12b7901e47757c868c8c13c6a624c9ecb # 0.11.7
+    rev: 0.12.10 # 0.11.7
     hooks:
       - id: uv-lock
       # Runs locally when uv.lock, pyproject.toml, or uv.toml are part of
@@ -50,7 +50,7 @@ repos:
       # Skipped on pre-commit.ci (see ci.skip comment above).
       - id: uv-audit
   - repo: https://github.com/sirosen/check-jsonschema
-    rev: 943377262562a12b57292fc98fabd7dbf81451fe # 0.37.2
+    rev: 0.38.0 # 0.37.2
     hooks:
       - id: check-github-workflows
       - id: check-github-actions
