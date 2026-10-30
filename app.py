@@ -28,6 +28,7 @@ match environment:
             "GHCR_PACKAGE_VERSION": "4.3.0-rc1",
             "GTM_ENABLED": "true",
             "GTM_CONTAINER_ID": "GTM-WHXXVWKC",
+            "SENTRY_TRACES_SAMPLE_RATE": "1.0",
         }
     case "stage":
         environment_variables = {
@@ -39,6 +40,7 @@ match environment:
             "GHCR_PACKAGE_VERSION": "4.3.0-rc1",
             "GTM_ENABLED": "false",
             "GTM_CONTAINER_ID": "",
+            "SENTRY_TRACES_SAMPLE_RATE": "1.0",
         }
     case "dev":
         environment_variables = {
@@ -50,6 +52,7 @@ match environment:
             "GHCR_PACKAGE_VERSION": "edge",
             "GTM_ENABLED": "false",
             "GTM_CONTAINER_ID": "",
+            "SENTRY_TRACES_SAMPLE_RATE": "1.0",
         }
     case _:
         valid_envs_str = ",".join(VALID_ENVIRONMENTS)
@@ -79,6 +82,23 @@ short_commit_sha = get_short_commit_sha(
 print(
     f"Using images: agora-app:{app_version}, agora-api:{api_version}, "
     f"agora-api-next:{api_next_version}, agora-apex:{apex_version}"
+)
+
+# Sentry config shared by the app, api and api-next containers so that frontend
+# and backend events for one release line up
+sentry_env_vars = {
+    "SENTRY_ENVIRONMENT": environment,
+    "SENTRY_RELEASE": f"agora@{ghcr_package_version}+{short_commit_sha}",
+    "SENTRY_TRACES_SAMPLE_RATE": environment_variables["SENTRY_TRACES_SAMPLE_RATE"],
+}
+# the app reports to the agora Sentry project, the APIs to agora-api
+app_sentry_dsn_secret = ServiceSecret(
+    secret_name="agora-sentry-dsn",
+    environment_key="SENTRY_DSN",
+)
+api_sentry_dsn_secret = ServiceSecret(
+    secret_name="agora-api-sentry-dsn",
+    environment_key="SENTRY_DSN",
 )
 
 # Define stacks
@@ -142,12 +162,14 @@ api_props = ServiceProps(
         "MONGODB_NAME": "agora",
         "MONGODB_USER": docdb_master_username,
         "MONGODB_HOST": docdb_stack.cluster.cluster_endpoint.hostname,
+        **sentry_env_vars,
     },
     container_secrets=[
         ServiceSecret(
             secret_name=docdb_stack.master_password_secret.secret_name,
             environment_key="MONGODB_PASS",
-        )
+        ),
+        api_sentry_dsn_secret,
     ],
     auto_scale_min_capacity=environment_variables["AUTO_SCALE_CAPACITY"]["min"],
     auto_scale_max_capacity=environment_variables["AUTO_SCALE_CAPACITY"]["max"],
@@ -178,12 +200,14 @@ api_next_props = ServiceProps(
         "SPRING_DATA_MONGODB_USERNAME": docdb_master_username,
         "SPRING_DATA_MONGODB_AUTHENTICATION_DATABASE": "admin",
         "SPRING_PROFILES_ACTIVE": f"{environment}",
+        **sentry_env_vars,
     },
     container_secrets=[
         ServiceSecret(
             secret_name=docdb_stack.master_password_secret.secret_name,
             environment_key="SPRING_DATA_MONGODB_PASSWORD",
-        )
+        ),
+        api_sentry_dsn_secret,
     ],
     auto_scale_min_capacity=environment_variables["AUTO_SCALE_CAPACITY"]["min"],
     auto_scale_max_capacity=environment_variables["AUTO_SCALE_CAPACITY"]["max"],
@@ -215,15 +239,9 @@ app_props = ServiceProps(
         "ENVIRONMENT": environment,
         "GOOGLE_TAG_MANAGER_ENABLED": environment_variables["GTM_ENABLED"],
         "GOOGLE_TAG_MANAGER_ID": environment_variables["GTM_CONTAINER_ID"],
-        "SENTRY_ENVIRONMENT": environment,
-        "SENTRY_RELEASE": f"agora@{ghcr_package_version}+{short_commit_sha}",
+        **sentry_env_vars,
     },
-    container_secrets=[
-        ServiceSecret(
-            secret_name="agora-sentry-dsn",
-            environment_key="SENTRY_DSN",
-        )
-    ],
+    container_secrets=[app_sentry_dsn_secret],
     auto_scale_min_capacity=environment_variables["AUTO_SCALE_CAPACITY"]["min"],
     auto_scale_max_capacity=environment_variables["AUTO_SCALE_CAPACITY"]["max"],
 )
